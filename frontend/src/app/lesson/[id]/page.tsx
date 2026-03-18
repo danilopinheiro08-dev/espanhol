@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
-import Link from "next/link";
-import { curriculum } from "@/lib/curriculum";
+import { useEffect, useState, use } from 'react';
+import Link from 'next/link';
+import { curriculum } from '@/lib/curriculum';
 
 interface QuizQuestion {
     question: string;
@@ -17,168 +16,242 @@ interface LessonContent {
     quiz: QuizQuestion[];
 }
 
-export default function LessonPage() {
-    const params = useParams();
-    const id = parseInt(params.id as string);
-    const lesson = curriculum.find(l => l.id === id);
+function renderMd(text: string) {
+    return text
+        .replace(/\*\*(.+?)\*\*/g, '<strong class="text-[#D35400]">$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/\n/g, '<br/>');
+}
 
+export default function LessonPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = use(params);
     const [content, setContent] = useState<LessonContent | null>(null);
     const [loading, setLoading] = useState(true);
-    const [currentQuestion, setCurrentQuestion] = useState(0);
-    const [selectedOption, setSelectedOption] = useState<number | null>(null);
-    const [showFeedback, setShowFeedback] = useState(false);
-    const [score, setScore] = useState(0);
-    const [quizFinished, setQuizFinished] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
+    const [showResult, setShowResult] = useState<Record<number, boolean>>({});
+    const [quizComplete, setQuizComplete] = useState(false);
+
+    const lesson = curriculum.find(l => l.id === parseInt(id));
 
     useEffect(() => {
-        if (lesson) {
-            fetch("http://localhost:8002/lesson-content", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ title: lesson.title, level: lesson.level })
-            })
-                .then(res => res.json())
-                .then(data => {
-                    setContent(data);
-                    setLoading(false);
-                })
-                .catch(err => {
-                    console.error(err);
-                    setLoading(false);
+        if (!lesson) { setLoading(false); return; }
+
+        const fetchLesson = async () => {
+            try {
+                const response = await fetch('http://localhost:8002/lesson-content', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title: lesson.title, level: lesson.level })
                 });
-        }
+                if (!response.ok) throw new Error('Falha ao carregar a aula');
+                const data = await response.json();
+                setContent(data);
+            } catch (err) {
+                setError('Não foi possível carregar o conteúdo. Verifique se o servidor está rodando.');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchLesson();
     }, [lesson]);
 
-    if (!lesson) return <div className="p-10 text-center">Lição não encontrada.</div>;
+    const handleAnswer = (questionIdx: number, optionIdx: number) => {
+        if (showResult[questionIdx]) return;
+        setSelectedAnswers(prev => ({ ...prev, [questionIdx]: optionIdx }));
+        setShowResult(prev => ({ ...prev, [questionIdx]: true }));
 
-    const handleOptionSelect = (idx: number) => {
-        if (showFeedback) return;
-        setSelectedOption(idx);
-        setShowFeedback(true);
-        if (idx === content?.quiz[currentQuestion].answer) {
-            setScore(s => s + 1);
+        // Check if all answered
+        if (content && Object.keys({ ...showResult, [questionIdx]: true }).length === content.quiz.length) {
+            setTimeout(() => setQuizComplete(true), 800);
         }
     };
 
-    const nextQuestion = () => {
-        if (currentQuestion < (content?.quiz.length || 0) - 1) {
-            setCurrentQuestion(c => c + 1);
-            setSelectedOption(null);
-            setShowFeedback(false);
-        } else {
-            setQuizFinished(true);
-        }
+    const getScore = () => {
+        if (!content) return 0;
+        return content.quiz.reduce((score, q, i) => {
+            return score + (selectedAnswers[i] === q.answer ? 1 : 0);
+        }, 0);
     };
+
+    const levelColors: Record<string, string> = {
+        "Libro 1": "from-green-400 to-emerald-600",
+        "Libro 2": "from-teal-400 to-cyan-600",
+        "Libro 3": "from-blue-400 to-indigo-600",
+        "Libro 4": "from-violet-400 to-purple-600",
+        "Libro 5": "from-pink-400 to-rose-600",
+        "Libro 6": "from-orange-400 to-red-600",
+    };
+
+    if (!lesson) {
+        return (
+            <div className="min-h-screen bg-[#FDF2E9] flex items-center justify-center p-8">
+                <div className="text-center space-y-4">
+                    <div className="text-6xl">🤔</div>
+                    <h1 className="text-2xl font-black text-[#2C3E50]">Lição não encontrada</h1>
+                    <Link href="/" className="inline-block px-6 py-3 bg-[#F39C12] text-white rounded-2xl font-bold hover:bg-[#D35400] transition-colors">
+                        ← Voltar ao Início
+                    </Link>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-[#FDF2E9]">
             {/* Header */}
-            <nav className="fixed top-0 w-full flex items-center justify-between p-4 md:p-6 bg-white/70 backdrop-blur-xl z-50 border-b border-[#E5D8CF]">
-                <Link href="/" className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-[#F39C12] rounded-xl flex items-center justify-center text-white font-black text-xl">D</div>
-                    <span className="text-xl font-black text-[#2C3E50]">iDALE! Espanhol</span>
-                </Link>
-                <div className="px-5 py-2 bg-orange-50 text-[#F39C12] border border-orange-100 rounded-full text-xs font-black uppercase tracking-widest">
-                    {lesson.level}
+            <header className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#E5D8CF] z-10">
+                <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+                    <Link href="/" className="flex items-center gap-2 group">
+                        <div className="w-8 h-8 bg-gradient-to-br from-[#F39C12] to-[#D35400] rounded-xl flex items-center justify-center text-white text-lg group-hover:scale-110 transition-transform">
+                            🎸
+                        </div>
+                        <div className="text-sm font-black text-[#7F8C8D] group-hover:text-[#F39C12] transition-colors">
+                            ← Dale Espanhol
+                        </div>
+                    </Link>
+                    <div className={`px-4 py-1.5 bg-gradient-to-r ${levelColors[lesson.level] || 'from-orange-400 to-orange-600'} rounded-full`}>
+                        <span className="text-xs font-black text-white uppercase tracking-wider">{lesson.level}</span>
+                    </div>
                 </div>
-            </nav>
+            </header>
 
-            <main className="max-w-4xl mx-auto pt-32 pb-24 px-6">
-                {loading ? (
-                    <div className="flex flex-col items-center justify-center space-y-4 py-20">
-                        <div className="w-12 h-12 border-4 border-[#F39C12] border-t-transparent rounded-full animate-spin"></div>
-                        <p className="text-[#7F8C8D] font-bold animate-pulse text-center">O Professor Hermano está preparando seu material cultural... 🎸</p>
+            <main className="max-w-4xl mx-auto px-6 py-12 space-y-10">
+
+                {/* Lesson Title */}
+                <div className="space-y-3">
+                    <p className="text-xs font-black text-[#F39C12] uppercase tracking-widest">{lesson.unit}</p>
+                    <h1 className="text-4xl md:text-5xl font-black text-[#2C3E50] leading-tight">{lesson.title}</h1>
+                    <p className="text-[#7F8C8D] font-medium text-lg">{lesson.description}</p>
+                </div>
+
+                {/* Hermano Intro Card */}
+                <div className="flex items-start gap-4 p-6 bg-orange-50 border-2 border-orange-100 rounded-[2rem]">
+                    <div className="w-14 h-14 bg-gradient-to-br from-[#F39C12] to-[#D35400] rounded-full flex items-center justify-center text-3xl flex-shrink-0 shadow-lg shadow-orange-200">
+                        🎸
                     </div>
-                ) : content ? (
-                    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                        {/* Explanation Section */}
-                        <section className="space-y-8">
-                            <div className="space-y-2">
-                                <h1 className="text-4xl md:text-5xl font-black text-[#2C3E50] leading-tight">{lesson.title}</h1>
-                                <p className="text-[#F39C12] font-black uppercase tracking-[0.2em] text-sm">Aula de Dale Espanhol com Professor Hermano 👨‍🏫</p>
-                            </div>
+                    <div>
+                        <p className="font-black text-[#D35400] text-sm uppercase tracking-wider mb-1">Professor Hermano</p>
+                        <p className="font-medium text-[#2C3E50]">¡Hola, hermano! Preparei uma aula especial sobre <strong>{lesson.title}</strong>. Vamos nessa!</p>
+                    </div>
+                </div>
 
-                            <div className="prose prose-slate max-w-none text-lg text-[#2C3E50] leading-relaxed bg-white p-8 md:p-12 rounded-[2.5rem] border-2 border-[#E5D8CF] shadow-sm whitespace-pre-wrap font-medium">
-                                {content.explanation}
-                            </div>
-                        </section>
+                {/* Loading */}
+                {loading && (
+                    <div className="flex flex-col items-center justify-center py-24 gap-4">
+                        <div className="w-16 h-16 bg-gradient-to-br from-[#F39C12] to-[#D35400] rounded-full flex items-center justify-center text-3xl animate-bounce shadow-2xl shadow-orange-200">
+                            🎸
+                        </div>
+                        <p className="text-[#7F8C8D] font-bold">O Hermano está preparando sua aula...</p>
+                        <div className="flex gap-1.5">
+                            <div className="w-2.5 h-2.5 bg-orange-400 rounded-full animate-bounce" />
+                            <div className="w-2.5 h-2.5 bg-orange-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                            <div className="w-2.5 h-2.5 bg-orange-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                        </div>
+                    </div>
+                )}
 
-                        {/* Quiz Section */}
-                        {!quizFinished ? (
-                            <section className="space-y-8 pt-12 border-t-2 border-[#E5D8CF]">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-[#F39C12] text-white rounded-2xl flex items-center justify-center text-xl font-black shadow-lg shadow-orange-100">
-                                        {currentQuestion + 1}
-                                    </div>
-                                    <div>
-                                        <h2 className="text-2xl font-black text-[#2C3E50]">Quiz do Hermano</h2>
-                                        <p className="text-[#7F8C8D] font-bold">Verifique o que você aprendeu agora!</p>
-                                    </div>
-                                </div>
+                {/* Error */}
+                {error && (
+                    <div className="p-8 bg-red-50 border-2 border-red-100 rounded-[2rem] text-center space-y-3">
+                        <div className="text-4xl">😞</div>
+                        <p className="font-bold text-red-600">{error}</p>
+                        <p className="text-sm text-red-400">Certifique-se de que o backend está rodando na porta 8002.</p>
+                    </div>
+                )}
 
-                                <div className="bg-white p-8 md:p-12 rounded-[2.5rem] border-2 border-[#E5D8CF] shadow-xl space-y-8 transition-all">
-                                    <h3 className="text-xl md:text-2xl font-bold text-[#2C3E50] leading-tight">
-                                        {content.quiz[currentQuestion].question}
-                                    </h3>
+                {/* Content */}
+                {content && !loading && (
+                    <>
+                        {/* Explanation */}
+                        <div className="bg-white border-2 border-[#E5D8CF] rounded-[2rem] p-8 space-y-4">
+                            <h2 className="text-2xl font-black text-[#2C3E50] flex items-center gap-3">
+                                <span className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center text-xl">📖</span>
+                                A Aula
+                            </h2>
+                            <div
+                                className="text-[#2C3E50] leading-relaxed font-medium text-lg"
+                                dangerouslySetInnerHTML={{ __html: renderMd(content.explanation) }}
+                            />
+                        </div>
 
-                                    <div className="grid grid-cols-1 gap-4">
-                                        {content.quiz[currentQuestion].options.map((opt, i) => (
-                                            <button
-                                                key={i}
-                                                onClick={() => handleOptionSelect(i)}
-                                                className={`p-6 text-left rounded-2xl border-2 font-black transition-all flex items-center justify-between group
-                          ${selectedOption === i
-                                                        ? (i === content.quiz[currentQuestion].answer ? 'bg-green-50 border-green-500 text-green-700' : 'bg-red-50 border-red-500 text-red-700')
-                                                        : showFeedback && i === content.quiz[currentQuestion].answer
-                                                            ? 'bg-green-50 border-green-500 text-green-700'
-                                                            : 'bg-white border-[#E5D8CF] hover:border-[#F39C12] text-[#2C3E50] hover:bg-orange-50'
+                        {/* Quiz */}
+                        <div className="space-y-6">
+                            <h2 className="text-2xl font-black text-[#2C3E50] flex items-center gap-3">
+                                <span className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center text-xl">🧠</span>
+                                Quiz Rápido
+                            </h2>
+                            <div className="space-y-6">
+                                {content.quiz.map((q, qIdx) => {
+                                    const answered = showResult[qIdx];
+                                    return (
+                                        <div key={qIdx} className="bg-white border-2 border-[#E5D8CF] rounded-[2rem] p-8 space-y-5">
+                                            <div className="flex items-start gap-4">
+                                                <span className="w-9 h-9 bg-gradient-to-br from-[#F39C12] to-[#D35400] text-white rounded-xl flex items-center justify-center font-black text-sm flex-shrink-0">
+                                                    {qIdx + 1}
+                                                </span>
+                                                <p className="text-xl font-bold text-[#2C3E50]">{q.question}</p>
+                                            </div>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 ml-13">
+                                                {q.options.map((opt, oIdx) => {
+                                                    const isSelected = selectedAnswers[qIdx] === oIdx;
+                                                    const isCorrect = q.answer === oIdx;
+                                                    let style = "border-2 border-[#E5D8CF] bg-white text-[#2C3E50] hover:border-[#F39C12] hover:bg-orange-50";
+                                                    if (answered) {
+                                                        if (isCorrect) style = "border-2 border-green-400 bg-green-50 text-green-800";
+                                                        else if (isSelected) style = "border-2 border-red-400 bg-red-50 text-red-700";
+                                                        else style = "border-2 border-[#E5D8CF] bg-white opacity-50 text-[#2C3E50]";
                                                     }
-                        `}
-                                            >
-                                                <span>{opt}</span>
-                                                {selectedOption === i && (
-                                                    <span>{i === content.quiz[currentQuestion].answer ? '✅' : '❌'}</span>
-                                                )}
-                                            </button>
-                                        ))}
-                                    </div>
-
-                                    {showFeedback && (
-                                        <div className="p-6 bg-orange-50 rounded-2xl border border-orange-100 animate-in zoom-in-95 duration-300">
-                                            <p className="text-[#D35400] font-black mb-4">💡 {content.quiz[currentQuestion].explanation}</p>
-                                            <button
-                                                onClick={nextQuestion}
-                                                className="w-full py-5 bg-[#F39C12] text-white rounded-2xl font-black shadow-lg shadow-orange-200 hover:bg-[#D35400] transition-all"
-                                            >
-                                                {currentQuestion < content.quiz.length - 1 ? "Próxima Pergunta →" : "Ver Resultado Final 🏆"}
-                                            </button>
+                                                    return (
+                                                        <button
+                                                            key={oIdx}
+                                                            onClick={() => handleAnswer(qIdx, oIdx)}
+                                                            disabled={answered}
+                                                            className={`p-4 rounded-2xl text-left font-bold transition-all duration-200 ${style} ${!answered ? 'active:scale-95 cursor-pointer' : 'cursor-default'}`}
+                                                        >
+                                                            <span className="font-black text-xs uppercase tracking-wider opacity-50 mr-2">
+                                                                {['A', 'B', 'C', 'D'][oIdx]}.
+                                                            </span>
+                                                            {opt}
+                                                            {answered && isCorrect && <span className="ml-2">✅</span>}
+                                                            {answered && isSelected && !isCorrect && <span className="ml-2">❌</span>}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                            {answered && (
+                                                <div className={`ml-13 p-4 rounded-2xl text-sm font-medium animate-in fade-in duration-300 ${selectedAnswers[qIdx] === q.answer ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-orange-50 text-[#D35400] border border-orange-200'}`}>
+                                                    <strong>Hermano diz:</strong> {q.explanation}
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Score Card */}
+                        {quizComplete && (
+                            <div className="bg-gradient-to-br from-[#F39C12] to-[#D35400] rounded-[2rem] p-10 text-center space-y-6 shadow-2xl shadow-orange-200 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="text-6xl">{getScore() === content.quiz.length ? '🏆' : getScore() >= 2 ? '⭐' : '💪'}</div>
+                                <div>
+                                    <p className="text-white/80 font-black uppercase tracking-widest text-sm mb-2">Resultado Final</p>
+                                    <p className="text-5xl font-black text-white">{getScore()}/{content.quiz.length}</p>
+                                    <p className="text-white/90 font-bold text-lg mt-1">
+                                        {getScore() === content.quiz.length ? '¡Perfecto! Hermano está orgulhoso!' : getScore() >= 2 ? '¡Muy bien! Quase lá!' : '¡Dale! Continue praticando, hermano!'}
+                                    </p>
                                 </div>
-                            </section>
-                        ) : (
-                            <section className="text-center py-24 space-y-8 bg-[#F39C12] rounded-[3rem] text-white shadow-2xl animate-in zoom-in-95 duration-500 px-6">
-                                <div className="text-9xl">🎸</div>
-                                <div className="space-y-2">
-                                    <h2 className="text-5xl font-black tracking-tight">¡Dale, hermano!</h2>
-                                    <p className="text-xl font-bold opacity-90 italic">Você destruiu na lição {lesson.id}</p>
-                                </div>
-                                <div className="text-7xl font-black">
-                                    {score} / {content.quiz.length}
-                                </div>
-                                <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
-                                    <Link href="/" className="px-12 py-5 bg-white text-[#F39C12] rounded-2xl font-black text-xl hover:shadow-2xl transition-all">
-                                        Voltar para Início
+                                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                                    <Link href="/" className="px-8 py-4 bg-white text-[#D35400] rounded-2xl font-black hover:opacity-90 transition-all active:scale-95">
+                                        ← Ver mais Lições
                                     </Link>
-                                    <Link href="/chat" className="px-12 py-5 bg-[#D35400] text-white rounded-2xl font-black text-xl border-2 border-orange-400 hover:bg-orange-400 transition-all">
-                                        Chat com Hermano
+                                    <Link href="/chat" className="px-8 py-4 bg-white/20 border-2 border-white text-white rounded-2xl font-black hover:bg-white/30 transition-all active:scale-95">
+                                        Tirar dúvidas com o Hermano 🎸
                                     </Link>
                                 </div>
-                            </section>
+                            </div>
                         )}
-                    </div>
-                ) : (
-                    <div className="text-center py-20 text-[#2C3E50] font-bold">Erro ao carregar o Hermano. Tente novamente!</div>
+                    </>
                 )}
             </main>
         </div>
