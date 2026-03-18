@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Kill any existing processes on ports 8001 and 3000
-fuser -k 8001/tcp
+# Kill any existing processes on ports 8002 and 3000
+fuser -k 8002/tcp
 fuser -k 3000/tcp
 
 echo "🚀 Iniciando o Espanhol Maestro..."
@@ -18,7 +18,7 @@ cd ../frontend
 npm run dev &
 FRONTEND_PID=$!
 
-echo "✅ Backend rodando em http://localhost:8001"
+echo "✅ Backend rodando em http://localhost:8002"
 echo "✅ Frontend rodando em http://localhost:3000"
 echo "Pressione Ctrl+C para parar."
 

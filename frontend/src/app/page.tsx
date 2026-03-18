@@ -1,99 +1,145 @@
-import Image from "next/image";
-import Link from "next/link";
+"use client";
 
-export default function Home() {
+import Image from 'next/image'
+import Link from 'next/link'
+import { curriculum } from '@/lib/curriculum'
+
+export default function LandingPage() {
   return (
-    <div className="min-h-screen flex flex-col items-center px-4 py-12 md:py-24">
-      {/* Header / Navbar simulation */}
-      <nav className="fixed top-0 w-full max-w-7xl flex items-center justify-between p-6 bg-white/80 backdrop-blur-md z-50 rounded-b-2xl shadow-sm border-b border-blue-100">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">E</div>
-          <span className="text-xl font-bold text-blue-900 tracking-tight">Espanhol Maestro</span>
-        </div>
-        <div className="hidden md:flex gap-8 items-center text-sm font-medium text-slate-600">
-          <Link href="#" className="hover:text-blue-600 transition-colors">Início</Link>
-          <Link href="#" className="hover:text-blue-600 transition-colors">Cursos</Link>
-          <Link href="#" className="hover:text-blue-600 transition-colors">Tutor IA</Link>
-          <Link href="#" className="hover:text-blue-600 transition-colors">Progresso</Link>
-        </div>
-        <div className="flex gap-4 items-center">
-          <button className="px-5 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-50 rounded-full transition-all">Sair</button>
+    <div className="min-h-screen selection:bg-orange-100 selection:text-orange-900">
+      {/* Header/Nav */}
+      <nav className="fixed top-0 w-full flex items-center justify-between p-4 md:p-6 bg-[#FDF2E9]/70 backdrop-blur-xl z-50 border-b border-[#E5D8CF]">
+        <Link href="/" className="flex items-center gap-3 group">
+          <div className="w-12 h-12 bg-[#F39C12] rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-orange-200 group-hover:scale-110 transition-transform">D</div>
+          <div className="flex flex-col">
+            <span className="text-xl font-black text-[#2C3E50] leading-none mb-1">iDALE!</span>
+            <span className="text-[10px] font-bold text-[#D35400] uppercase tracking-[0.2em]">Espanhol</span>
+          </div>
+        </Link>
+        <div className="hidden md:flex items-center gap-10">
+          <Link href="/" className="text-sm font-bold text-[#2C3E50] hover:text-[#F39C12] transition-colors">Início</Link>
+          <Link href="/chat" className="text-sm font-bold text-[#2C3E50] hover:text-[#F39C12] transition-colors">Tutor IA</Link>
+          <a href="#grade" className="text-sm font-bold text-[#2C3E50] hover:text-[#F39C12] transition-colors">Grade Curricular</a>
         </div>
       </nav>
 
-      {/* Main Hero Section */}
-      <main className="w-full max-w-5xl text-center mt-12 space-y-12">
-        <div className="space-y-6">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-sm font-medium animate-fade-in">
+      {/* Hero Section */}
+      <main className="max-w-7xl mx-auto px-6 pt-32 pb-24 space-y-32">
+        <section className="text-center space-y-8 py-12">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-orange-50 rounded-full border border-orange-100 animate-in fade-in slide-in-from-top-4 duration-1000">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
             </span>
-            Aprender espanhol nunca foi tão divertido
+            <span className="text-xs font-black text-orange-600 uppercase tracking-widest">Matrículas Abertas</span>
           </div>
-          <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 tracking-tight">
-            Domine o <span className="text-blue-600">Espanhol</span><br />
-            de um Jeito Inteligente 🎓
+
+          <h1 className="text-5xl md:text-8xl font-black text-[#2C3E50] tracking-tight leading-[0.9] animate-in fade-in slide-in-from-bottom-8 duration-700">
+            DALE A <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F39C12] to-[#D35400] italic">ESTUDIAR.</span>
           </h1>
-          <p className="text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            O Danilinho é seu tutor IA que ensina com diálogos interativos, gramática aplicada e cultura hispânica. Prepare-se para fluência real enquanto se diverte.
+
+          <p className="text-xl md:text-2xl text-[#7F8C8D] max-w-2xl mx-auto leading-relaxed font-medium">
+            O Professor Hermano é seu guia na jornada para o espanhol da vida real. Aprenda com cultura, música e diversão latina.
           </p>
-          <div className="flex flex-col md:flex-row gap-4 justify-center pt-6">
-            <Link href="/chat" className="px-8 py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
-              🚀 Começar com o Danilinho
+
+          <div className="flex flex-col sm:flex-row gap-6 justify-center pt-4">
+            <Link href="/chat" className="px-10 py-5 bg-[#F39C12] text-white rounded-3xl font-black text-lg shadow-2xl shadow-orange-200 hover:bg-[#D35400] hover:-translate-y-1 transition-all active:scale-95">
+              Começar Agora
             </Link>
-            <Link href="#cursos" className="px-8 py-4 bg-white text-slate-900 border border-slate-200 rounded-xl font-bold shadow-sm hover:bg-slate-50 transition-all flex items-center justify-center gap-2">
-              📜 Explorar Lições
-            </Link>
+            <a href="#grade" className="px-10 py-5 bg-white text-[#2C3E50] rounded-3xl font-black text-lg border-2 border-[#E5D8CF] hover:border-[#F39C12] hover:bg-orange-50 transition-all">
+              Ver os 6 Libros
+            </a>
           </div>
-        </div>
+        </section>
 
         {/* Stats Section */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-12">
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
-            { label: "Lições", value: "30+" },
-            { label: "Níveis", value: "6" },
-            { label: "Tópicos", value: "800+" },
-            { label: "Tutor IA", value: "24/7" },
+            { label: "Lições Ativas", value: "205", color: "text-orange-600", bg: "bg-orange-50" },
+            { label: "Níveis (Libros)", value: "06", color: "text-orange-600", bg: "bg-orange-50" },
+            { label: "Foco Cultural", value: "100%", color: "text-orange-600", bg: "bg-orange-50" },
           ].map((stat, i) => (
-            <div key={i} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-              <div className="text-3xl font-bold text-blue-600 mb-1">{stat.value}</div>
-              <div className="text-sm font-medium text-slate-500">{stat.label}</div>
+            <div key={i} className={`${stat.bg} p-10 rounded-[2.5rem] border border-orange-100 space-y-2 group hover:scale-105 transition-all duration-500`}>
+              <p className="text-sm font-black text-orange-400 uppercase tracking-widest">{stat.label}</p>
+              <p className={`text-6xl font-black ${stat.color}`}>{stat.value}</p>
             </div>
           ))}
-        </div>
+        </section>
 
-        {/* Trails Section Header */}
-        <div id="cursos" className="pt-24 space-y-4">
-          <h2 className="text-3xl font-bold text-slate-900">Trilhas de Estudo</h2>
-          <p className="text-slate-500">Escolha seu foco e acelere seu aprendizado</p>
-        </div>
+        {/* Why it works Section */}
+        <section className="pt-24 space-y-12">
+          <div className="space-y-4">
+            <h2 className="text-4xl font-black text-[#2C3E50] tracking-tight">Por que o Dale Espanhol funciona?</h2>
+            <p className="text-lg font-bold text-[#7F8C8D]">O método do Professor Hermano une ciência e cultura latina</p>
+          </div>
 
-        {/* Trails Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            { title: "Espanhol para Viagens", icon: "✈️", color: "bg-blue-500", tags: ["A1", "A2"] },
-            { title: "Negócios & Trabalho", icon: "💼", color: "bg-indigo-500", tags: ["B1", "B2"] },
-            { title: "Gramática Essencial", icon: "✍️", color: "bg-sky-500", tags: ["Todos"] },
-            { title: "Conversação Livre", icon: "🗣️", color: "bg-blue-400", tags: ["Prática"] },
-            { title: "Cultura & Cinema", icon: "🎬", color: "bg-blue-600", tags: ["Imersão"] },
-            { title: "Preparatório DELE", icon: "🎖️", color: "bg-blue-800", tags: ["C1", "C2"] },
-          ].map((trail, i) => (
-            <div key={i} className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm hover:border-blue-200 group text-left transition-all cursor-pointer">
-              <div className={`w-12 h-12 ${trail.color} rounded-xl mb-4 flex items-center justify-center text-2xl`}>{trail.icon}</div>
-              <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">{trail.title}</h3>
-              <div className="flex gap-2">
-                {trail.tags.map(tag => <span key={tag} className="px-2 py-0.5 bg-slate-100 text-slate-500 text-xs font-semibold rounded uppercase tracking-wider">{tag}</span>)}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              { title: "Técnica de Feynman", desc: "Explicamos conceitos complexos como se estivéssemos falando com um 'hermano'.", icon: "🤝" },
+              { title: "Recordação Ativa", desc: "Quizzes rápidos ao final de cada lição para garantir que você nunca esqueça.", icon: "🧠" },
+              { title: "Imersão Cultural", desc: "Aprenda com artistas reais (Calle 13, Shakira) e o espanhol falado nas ruas.", icon: "🎸" },
+            ].map((feature, i) => (
+              <div key={i} className="bg-white p-8 rounded-[2rem] border-2 border-[#E5D8CF] hover:border-[#F39C12] transition-colors space-y-6">
+                <div className="text-4xl">{feature.icon}</div>
+                <div className="space-y-2">
+                  <h3 className="text-xl font-bold text-[#2C3E50]">{feature.title}</h3>
+                  <p className="text-[#7F8C8D] leading-relaxed font-medium">{feature.desc}</p>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </main>
+            ))}
+          </div>
+        </section>
 
-      {/* Footer */}
-      <footer className="w-full max-w-7xl mt-32 py-12 border-t border-slate-100 text-center text-slate-500 text-sm">
-        <p>© 2026 Danilinho Espanhol — Aprendizado Inteligente</p>
-      </footer>
+        {/* Curriculum Grid */}
+        <section id="grade" className="pt-24 space-y-12">
+          <div className="space-y-4">
+            <h2 className="text-4xl font-black text-[#2C3E50] tracking-tight">A Jornada do Hermano</h2>
+            <p className="text-lg font-bold text-[#7F8C8D]">6 Libros para te levar do zero absoluto à maestria cultural</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            {["Libro 1", "Libro 2", "Libro 3", "Libro 4", "Libro 5", "Libro 6"].map((lvl) => (
+              <div key={lvl} className="space-y-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-[#F39C12] text-white rounded-2xl flex items-center justify-center text-xl font-black shadow-lg shadow-orange-100">
+                    {lvl.split(' ')[1]}
+                  </div>
+                  <h3 className="text-2xl font-black text-[#2C3E50]">{lvl}</h3>
+                </div>
+                <div className="bg-white rounded-[2rem] border-2 border-[#E5D8CF] p-2 max-h-[400px] overflow-y-auto scrollbar-hide space-y-2">
+                  {curriculum.filter(l => l.level === lvl).map(lesson => (
+                    <Link
+                      key={lesson.id}
+                      href={`/lesson/${lesson.id}`}
+                      className="block p-4 bg-white rounded-2xl border border-transparent hover:border-[#F39C12] hover:bg-orange-50 transition-all group cursor-pointer active:scale-[0.98]"
+                    >
+                      <div className="flex justify-between items-start gap-3">
+                        <span className="text-[10px] font-black text-[#F39C12] uppercase tracking-wider">{lesson.unit}</span>
+                        <span className="opacity-0 group-hover:opacity-100 transition-opacity">🎸</span>
+                      </div>
+                      <h4 className="font-bold text-[#2C3E50] leading-tight">{lesson.title}</h4>
+                      <p className="text-xs text-[#7F8C8D] mt-1">{lesson.description}</p>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="pt-24 pb-12 border-t border-[#E5D8CF] text-center space-y-8">
+          <div className="flex justify-center gap-8">
+            <a href="https://www.tiktok.com/@dale_espanhol" target="_blank" rel="noopener noreferrer" className="text-3xl grayscale hover:grayscale-0 transition-all hover:scale-110">📱</a>
+            <a href="https://www.instagram.com/dale_espanhol/" target="_blank" rel="noopener noreferrer" className="text-3xl grayscale hover:grayscale-0 transition-all hover:scale-110">📸</a>
+            <a href="https://organizar-ee.notion.site/Dale-Curso-de-Espanhol-62b852bc71b1824287d5012fdb6f3c34" target="_blank" rel="noopener noreferrer" className="text-3xl grayscale hover:grayscale-0 transition-all hover:scale-110">🗒️</a>
+          </div>
+          <div className="space-y-2">
+            <p className="text-[#7F8C8D] font-bold">Dale Espanhol © 2026</p>
+            <p className="text-xs text-[#7F8C8D] uppercase tracking-widest font-black">Dale a estudar.</p>
+          </div>
+        </footer>
+      </main>
     </div>
-  );
+  )
 }
